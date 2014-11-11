@@ -10,19 +10,13 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.saintandreas.resources.ResourceManager;
+import org.saintandreas.shadertoy.data.Shaders;
 
 public class MainWindow {
-  private static final String DEFAULT_FRAGMENT_SHADER = 
-      "void main(void)\n" +
-      "{\n" +
-      "  vec2 uv = gl_FragCoord.xy / iResolution.xy;\n" +
-      "  gl_FragColor = vec4(uv,0.5+0.5*sin(iGlobalTime),1.0);\n" +
-      "}\n";
-
   protected Shell shell;
   private Text text;
-  private String fragmentShader = DEFAULT_FRAGMENT_SHADER;
-  private ShaderToyWindow renderWindow = new ShaderToyWindow(); 
+  private ShaderToyWindow renderWindow = new ShaderToyWindow();
 
   /**
    * Launch the application.
@@ -45,11 +39,13 @@ public class MainWindow {
     createContents();
     shell.open();
     shell.layout();
+    renderWindow.create(800, 600);
+    renderWindow.setFragmentSource(ResourceManager.getAsString(Shaders.FRAGMENT_SHADER));
     while (!shell.isDisposed()) {
-      if (!display.readAndDispatch()) {
-        display.sleep();
-      }
+      while (display.readAndDispatch()) {};
+      renderWindow.onFrame();
     }
+    renderWindow.destroy();
   }
 
   /**
@@ -66,7 +62,7 @@ public class MainWindow {
     gd_text.heightHint = 20;
     gd_text.widthHint = 689;
     text.setLayoutData(gd_text);
-    text.setText(fragmentShader);
+    text.setText(ResourceManager.getAsString(Shaders.FRAGMENT_SHADER));
     
     Button btnRun = new Button(shell, SWT.NONE);
     btnRun.addSelectionListener(new SelectionAdapter() {
@@ -98,5 +94,7 @@ public class MainWindow {
   }
 
   protected void onRun() {
+    String newFragmentShaderSource = text.getText();
+    renderWindow.setFragmentSource(newFragmentShaderSource);
   }
 }

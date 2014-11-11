@@ -11,23 +11,14 @@ import org.lwjgl.opengl.GLContext;
 import org.lwjgl.opengl.PixelFormat;
 
 public class RenderWindow {
-  private boolean running = true;
   private GLContext glContext = new GLContext();
-  private int width = 800, height = 600;
-  private ContextAttribs contextAttributes = new ContextAttribs();
+  private ContextAttribs contextAttributes = new ContextAttribs(3, 2)
+      .withProfileCore(true);
   private PixelFormat pixelFormat = new PixelFormat();
 
-  public RenderWindow() {
-    new Thread(() -> {
-      run();
-    }).start();;
-  }
-
-  public void stop() {
-    running = false;
-  }
-
-  private void run() {
+  public RenderWindow() {}
+  
+  public void create(int width, int height) {
     try {
       Display.setDisplayMode(new DisplayMode(width, height));
       Display.setVSyncEnabled(true);
@@ -36,17 +27,22 @@ public class RenderWindow {
       Mouse.create();
       Keyboard.create();
       Controllers.create();
-    } catch (LWJGLException e) {
-      throw new RuntimeException(e);
+    } catch (LWJGLException ex) {
+      throw new RuntimeException(ex);
     }
     onCreate();
-    while (running) {
-      if (Display.wasResized()) {
-        onResize(Display.getWidth(), Display.getHeight());
-      }
-      drawFrame();
-      finishFrame();
+    onResize(width, height);
+  }
+
+  public void onFrame() {
+    if (Display.wasResized()) {
+      onResize(Display.getWidth(), Display.getHeight());
     }
+    drawFrame();
+    finishFrame();
+  }
+
+  public void destroy() {
     onDestroy();
     Display.destroy();
   }
@@ -65,7 +61,5 @@ public class RenderWindow {
   }
 
   protected void onResize(int width, int height) {
-    this.width = width;
-    this.height = height;
   }
 }
