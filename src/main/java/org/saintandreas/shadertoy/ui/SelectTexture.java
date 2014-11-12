@@ -57,6 +57,7 @@ public class SelectTexture extends Dialog {
       Button button = new Button(composite, SWT.NONE);
 //      button.setText(res.getPath());
 //      button.setData(res);
+      
       try {
         button.setImage(new Image(shell.getDisplay(), ResourceManager.getAsInputStream(res)));
       } catch (SWTException e) {

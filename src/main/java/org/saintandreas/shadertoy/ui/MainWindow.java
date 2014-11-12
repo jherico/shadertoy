@@ -1,13 +1,21 @@
 package org.saintandreas.shadertoy.ui;
 
+import java.io.File;
+import java.io.IOException;
+
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.saintandreas.resources.Resource;
@@ -15,12 +23,15 @@ import org.saintandreas.resources.ResourceManager;
 import org.saintandreas.shadertoy.ShaderToyWindow;
 import org.saintandreas.shadertoy.data.Shaders;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 import com.oculusvr.capi.Hmd;
 
 public class MainWindow {
   private ShaderToyWindow renderWindow = new ShaderToyWindow();
   protected Shell shell;
   private Text text;
+  private String currentFile;
   
   /**
    * Launch the application.
@@ -56,6 +67,21 @@ public class MainWindow {
     renderWindow.destroy();
   }
 
+  class MyTextureSelectionAdapter extends SelectionAdapter {
+    final int channel;
+    
+    MyTextureSelectionAdapter(int channel) {
+      this.channel = channel;
+    }
+    
+    @Override
+    public void widgetSelected(SelectionEvent e) {
+      Object result = new SelectTexture(shell, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL).open();
+      if (null != result) {
+        renderWindow.setTextureSource((Resource)result, channel);
+      }
+    }
+  }
   /**
    * Create contents of the window.
    */
@@ -66,6 +92,8 @@ public class MainWindow {
     shell.setLayout(new GridLayout(4, true));
     
     text = new Text(shell, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL | SWT.CANCEL | SWT.MULTI);
+    Font terminalFont = JFaceResources.getFont(JFaceResources.TEXT_FONT);
+    text.setFont(terminalFont);
     GridData gd_text = new GridData(SWT.FILL, SWT.FILL, true, true, 4, 1);
     gd_text.heightHint = 20;
     gd_text.widthHint = 689;
@@ -84,29 +112,57 @@ public class MainWindow {
     new Label(shell, SWT.NONE);
     new Label(shell, SWT.NONE);
     
-    GridData gd_channel0 = new GridData(SWT.FILL, SWT.FILL, false, false, 1, 1);
-    gd_channel0.heightHint = 125;
+     
 
-    Button channel0 = new Button(shell, SWT.NONE);
-    channel0.addSelectionListener(new SelectionAdapter() {
+    for (int i = 0; i < 4; ++i) {
+      Button channel = new Button(shell, SWT.NONE);
+      GridData gd_channel0 = new GridData(SWT.FILL, SWT.FILL, false, false, 1, 1);
+      gd_channel0.heightHint = 125;
+      channel.addSelectionListener(new MyTextureSelectionAdapter(i));
+      channel.setLayoutData(gd_channel0);
+    }
+    Menu menu = new Menu(shell, SWT.BAR);
+    shell.setMenuBar(menu);
+
+    MenuItem mntmFile = new MenuItem(menu, SWT.CASCADE);
+    mntmFile.setText("File");
+
+    Menu menu_1 = new Menu(mntmFile);
+    mntmFile.setMenu(menu_1);
+
+    MenuItem mntmNew = new MenuItem(menu_1, SWT.NONE);
+    mntmNew.setText("New");
+
+    MenuItem mntmOpen = new MenuItem(menu_1, SWT.NONE);
+    mntmOpen.addSelectionListener(new SelectionAdapter() {
       @Override
       public void widgetSelected(SelectionEvent e) {
-        Object result = new SelectTexture(shell, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL).open();
+        FileDialog dialog = new FileDialog(shell, SWT.OPEN);
+        dialog.setFilterExtensions(new String [] {"*.fs"});
+        //dialog.setFilterPath("c:\\temp");
+        String result = dialog.open();
         if (null != result) {
-          renderWindow.setTextureSource((Resource)result, 0);
+          currentFile = result;
+          try {
+            String source = Files.toString(new File(currentFile), Charsets.UTF_8);
+            text.setText(source);
+          } catch (IOException e1) {
+          }
         }
       }
     });
-    channel0.setLayoutData(gd_channel0);
-
-    Button channel1 = new Button(shell, SWT.NONE);
-    channel1.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false, 1, 1));
-
-    Button channel2 = new Button(shell, SWT.NONE);
-    channel2.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false, 1, 1));
-
-    Button channel3 = new Button(shell, SWT.NONE);
-    channel3.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false, 1, 1));
+    mntmOpen.setText("Open File");
+    
+    new MenuItem(menu_1, SWT.SEPARATOR);
+    
+    MenuItem mntmSave = new MenuItem(menu_1, SWT.NONE);
+    mntmSave.setText("Save");
+    
+    MenuItem mntmSaveAs = new MenuItem(menu_1, SWT.NONE);
+    mntmSaveAs.setText("Save as...");
+    
+    MenuItem mntmExit = new MenuItem(menu_1, SWT.NONE);
+    mntmExit.setText("Exit");
   }
 
   protected void onRun() {

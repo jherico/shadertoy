@@ -3,6 +3,7 @@ package org.saintandreas.shadertoy;
 import static com.oculusvr.capi.OvrLibrary.ovrDistortionCaps.*;
 import static com.oculusvr.capi.OvrLibrary.ovrRenderAPIType.*;
 import static com.oculusvr.capi.OvrLibrary.ovrTrackingCaps.*;
+import static org.lwjgl.opengl.GL11.*;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -19,11 +20,13 @@ import org.saintandreas.math.Vector3f;
 
 import com.oculusvr.capi.EyeRenderDesc;
 import com.oculusvr.capi.FovPort;
+import com.oculusvr.capi.FrameTiming;
 import com.oculusvr.capi.Hmd;
 import com.oculusvr.capi.OvrLibrary;
 import com.oculusvr.capi.OvrLibrary.ovrHmdCaps;
 import com.oculusvr.capi.OvrMatrix4f;
 import com.oculusvr.capi.OvrQuaternionf;
+import com.oculusvr.capi.OvrRecti;
 import com.oculusvr.capi.OvrSizei;
 import com.oculusvr.capi.OvrVector2f;
 import com.oculusvr.capi.OvrVector2i;
@@ -44,6 +47,10 @@ public abstract class RiftWindow extends RenderWindow {
   private final FrameBuffer frameBuffers[] = new FrameBuffer[2];
   private final Matrix4f projections[] = new Matrix4f[2];
   private int frameCount = -1;
+  private boolean enableDynamicScaling = true;
+  private float minDynamicScale = 0.25f;
+  private float dynamicScale = 1.0f;
+  private float frameDelta;
 
   public static Vector3f toVector3f(OvrVector3f v) {
     return new Vector3f(v.x, v.y, v.z);
@@ -135,7 +142,9 @@ public abstract class RiftWindow extends RenderWindow {
       TextureHeader header = texture.Header;
       header.API = ovrRenderAPI_OpenGL;
       header.TextureSize = hmd.getFovTextureSize(eye, fov, 1.0f);
-      header.RenderViewport.Size = header.TextureSize;
+      header.RenderViewport.Size = new OvrSizei(); 
+      header.RenderViewport.Size.w = header.TextureSize.w;
+      header.RenderViewport.Size.h = header.TextureSize.h;
       header.RenderViewport.Pos = new OvrVector2i(0, 0);
     }
   }
@@ -158,7 +167,7 @@ public abstract class RiftWindow extends RenderWindow {
   @Override
   protected void onCreate() {
     long nativeWindow = getNativeWindow();
-//    OvrLibrary.INSTANCE.ovrHmd_AttachToWindow(hmd, Pointer.createConstant(nativeWindow), null, null);
+    OvrLibrary.INSTANCE.ovrHmd_AttachToWindow(hmd, Pointer.createConstant(nativeWindow), null, null);
     for (int eye = 0; eye < 2; ++eye) {
       TextureHeader eth = eyeTextures[eye].Header;
       frameBuffers[eye] = new FrameBuffer(
@@ -191,7 +200,7 @@ public abstract class RiftWindow extends RenderWindow {
 
   @Override
   protected final void drawFrame() {
-    hmd.beginFrame(frameCount);
+    FrameTiming frameTiming = hmd.beginFrame(frameCount);
     Posef eyePoses[] = hmd.getEyePoses(frameCount, eyeOffsets);
     for (int i = 0; i < 2; ++i) {
       int eye = hmd.EyeRenderOrder[i];
@@ -204,14 +213,33 @@ public abstract class RiftWindow extends RenderWindow {
 
       MatrixStack mv = MatrixStack.MODELVIEW;
       mv.withPush(()->{
+        OvrRecti vp = eyeTextures[eye].Header.RenderViewport;
         mv.preTranslate(toVector3f(poses[eye].Position).mult(-1));
         mv.preRotate(toQuaternion(poses[eye].Orientation).inverse());
         frameBuffers[eye].activate();
+        glViewport(vp.Pos.x, vp.Pos.y, vp.Size.w, vp.Size.h);
         renderScene(poses[eye]);
         frameBuffers[eye].deactivate();
       });
     }
     hmd.endFrame(poses, eyeTextures);
+    frameDelta = (float)(Hmd.getTimeInSeconds() - frameTiming.NextFrameSeconds);
+    if (frameDelta > 0.005f) {
+      dynamicScale = Math.max(minDynamicScale, dynamicScale * 0.95f);
+    } else if (frameDelta < 0.0001f && fps > 74.0f) {
+      dynamicScale = Math.min(1.0f, dynamicScale * 1.05f);
+    }
+    for (int i = 0; i < 2; ++i) {
+      OvrSizei size = eyeTextures[i].Header.TextureSize;
+      eyeTextures[i].Header.RenderViewport.Size.w = (int) (size.w * dynamicScale);
+      eyeTextures[i].Header.RenderViewport.Size.h = (int) (size.h * dynamicScale);
+      eyeTextures[i].write();
+    }
+  }
+  
+  @Override
+  protected void logFps() {
+    System.out.println(String.format("FPS: %f, Delta: %f, Scale: %f", fps, frameDelta, dynamicScale));
   }
   
   protected abstract void renderScene(Posef poses2);
