@@ -13,24 +13,30 @@ import org.eclipse.swt.widgets.Text;
 import org.saintandreas.resources.ResourceManager;
 import org.saintandreas.shadertoy.data.Shaders;
 
+import com.oculusvr.capi.Hmd;
+
 public class MainWindow {
+  private ShaderToyWindow renderWindow = new ShaderToyWindow();
   protected Shell shell;
   private Text text;
-  private ShaderToyWindow renderWindow = new ShaderToyWindow();
 
   /**
    * Launch the application.
    * @param args
    */
   public static void main(String[] args) {
+    Hmd.initialize();
     try {
       MainWindow window = new MainWindow();
       window.open();
     } catch (Exception e) {
       e.printStackTrace();
     }
+    Hmd.shutdown();
   }
 
+  public MainWindow() {
+  }
   /**
    * Open the window.
    */
@@ -39,7 +45,7 @@ public class MainWindow {
     createContents();
     shell.open();
     shell.layout();
-    renderWindow.create(800, 600);
+    renderWindow.create();
     renderWindow.setFragmentSource(ResourceManager.getAsString(Shaders.FRAGMENT_SHADER));
     while (!shell.isDisposed()) {
       while (display.readAndDispatch()) {};
@@ -57,7 +63,7 @@ public class MainWindow {
     shell.setText("ShaderToy Java");
     shell.setLayout(new GridLayout(4, true));
     
-    text = new Text(shell, SWT.BORDER | SWT.MULTI);
+    text = new Text(shell, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL | SWT.CANCEL | SWT.MULTI);
     GridData gd_text = new GridData(SWT.FILL, SWT.FILL, true, true, 4, 1);
     gd_text.heightHint = 20;
     gd_text.widthHint = 689;
@@ -76,7 +82,6 @@ public class MainWindow {
     new Label(shell, SWT.NONE);
     new Label(shell, SWT.NONE);
     
-
     GridData gd_channel0 = new GridData(SWT.FILL, SWT.FILL, false, false, 1, 1);
     gd_channel0.heightHint = 125;
 

@@ -1,15 +1,3 @@
-// Created by inigo quilez - iq/2013
-// License Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
-uniform vec3      iResolution;           // viewport resolution (in pixels)
-uniform float     iGlobalTime;           // shader playback time (in seconds)
-uniform float     iChannelTime[4];       // channel playback time (in seconds)
-uniform vec3      iChannelResolution[4]; // channel resolution (in pixels)
-uniform vec4      iMouse;                // mouse pixel coords. xy: current (if MLB down), zw: click
-uniform vec4      iDate;                 // (year, month, day, time in seconds)
-uniform float     iSampleRate;           // sound sample rate (i.e., 44100)
-//uniform samplerXX iChannel0..3;          // input channel. XX = 2D/Cube
-
-
 // 'Warp Speed' by David Hoskins 2013.
 // Adapted it from here:-   https://www.shadertoy.com/view/MssGD8
 // I tried to find gaps and variation in the star cloud for a feeling of structure.

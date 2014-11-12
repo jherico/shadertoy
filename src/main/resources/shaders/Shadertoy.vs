@@ -5,6 +5,9 @@ uniform mat4 ModelView = mat4(1);
 
 layout(location = 0) in vec3 Position;
 
+out vec3 iDir;
+
 void main() {
-  gl_Position = vec4(Position, 1);
+  iDir = Position;
+  gl_Position = Projection * ModelView * vec4(Position, 1);
 }
