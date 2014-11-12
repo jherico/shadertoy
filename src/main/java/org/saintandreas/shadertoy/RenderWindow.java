@@ -1,9 +1,8 @@
 package org.saintandreas.shadertoy;
 
+import static org.lwjgl.opengl.GL11.*;
+
 import org.lwjgl.LWJGLException;
-import org.lwjgl.input.Controllers;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.ContextAttribs;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
@@ -25,17 +24,15 @@ public abstract class RenderWindow {
       if (x != Integer.MIN_VALUE && y != Integer.MIN_VALUE) {
         Display.setLocation(x,  y);
       }
+      glGetError();
       GLContext.useContext(glContext, false);
-      Mouse.create();
-      Keyboard.create();
-      Controllers.create();
     } catch (LWJGLException ex) {
       throw new RuntimeException(ex);
     }
     onCreate();
     onResize(width, height);
   }
-  
+
   public void create(int width, int height) {
     create(width, height, Integer.MIN_VALUE, Integer.MIN_VALUE);
   }

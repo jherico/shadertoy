@@ -1,4 +1,4 @@
-package org.saintandreas.shadertoy;
+package org.saintandreas.shadertoy.ui;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -10,7 +10,9 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.saintandreas.resources.Resource;
 import org.saintandreas.resources.ResourceManager;
+import org.saintandreas.shadertoy.ShaderToyWindow;
 import org.saintandreas.shadertoy.data.Shaders;
 
 import com.oculusvr.capi.Hmd;
@@ -19,7 +21,7 @@ public class MainWindow {
   private ShaderToyWindow renderWindow = new ShaderToyWindow();
   protected Shell shell;
   private Text text;
-
+  
   /**
    * Launch the application.
    * @param args
@@ -86,6 +88,15 @@ public class MainWindow {
     gd_channel0.heightHint = 125;
 
     Button channel0 = new Button(shell, SWT.NONE);
+    channel0.addSelectionListener(new SelectionAdapter() {
+      @Override
+      public void widgetSelected(SelectionEvent e) {
+        Object result = new SelectTexture(shell, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL).open();
+        if (null != result) {
+          renderWindow.setTextureSource((Resource)result, 0);
+        }
+      }
+    });
     channel0.setLayoutData(gd_channel0);
 
     Button channel1 = new Button(shell, SWT.NONE);
