@@ -20,7 +20,6 @@ import org.saintandreas.resources.ResourceManager;
 import org.saintandreas.shadertoy.data.Shaders;
 
 import com.oculusvr.capi.Posef;
-//import com.oculusvr.capi.Texture;
 
 public class ShaderToyWindow extends RiftWindow {
   public static final String SHADER_HEADER = ""
@@ -80,17 +79,6 @@ public class ShaderToyWindow extends RiftWindow {
     glViewport(0, 0, width, height);
   }
 
-  // uniform vec3 iResolution; // viewport resolution (in pixels)
-  // uniform float iGlobalTime; // shader playback time (in seconds)
-  // uniform float iChannelTime[4]; // channel playback time (in seconds)
-  // uniform vec3 iChannelResolution[4]; // channel resolution (in pixels)
-  // uniform vec4 iMouse; // mouse pixel coords. xy: current (if MLB down), zw:
-  // click
-  // uniform samplerXX iChannel0..3; // input channel. XX = 2D/Cube
-  // uniform vec4 iDate; // (year, month, day, time in seconds)
-  // uniform float iSampleRate; // sound sample rate (i.e., 44100)
-
-
   public static Texture getTexture(Resource resource) {
     Texture texture = new Texture(GL_TEXTURE_2D);
     texture.bind();
@@ -115,7 +103,9 @@ public class ShaderToyWindow extends RiftWindow {
   public void setFragmentSource(String newFragmentShaderSource) {
     try {
       newFragmentShaderSource = newFragmentShaderSource.replaceAll("\\bgl_FragColor\\b", "FragColor");
-      Shader fs = new Shader(GL_FRAGMENT_SHADER, SHADER_HEADER + newFragmentShaderSource);
+      newFragmentShaderSource = newFragmentShaderSource.replaceAll("\\btexture2D\\b", "texture");
+      newFragmentShaderSource = SHADER_HEADER + newFragmentShaderSource; 
+      Shader fs = new Shader(GL_FRAGMENT_SHADER, newFragmentShaderSource);
       fs.compile();
 
       Program p = new Program(vertexShader, fs);
@@ -136,9 +126,7 @@ public class ShaderToyWindow extends RiftWindow {
       program.use();
       program.setUniform(UNIFORM_RESOLUTION, res);
       for (int i = 0; i < 4; ++i) {
-        if (null != channels[i]) {
-          program.setUniform("iChannel" + i, i);
-        }
+        program.setUniform("iChannel" + i, i);
       }
       Program.clear();
     }
@@ -160,9 +148,7 @@ public class ShaderToyWindow extends RiftWindow {
     program.use();
     OpenGL.bindProjection(program);
     program.setUniform(UNIFORM_GLOBALTIME, time);
-    MatrixStack mv = MatrixStack.MODELVIEW;
-    program.setUniform(UNIFORM_POSITION, toVector3f(pose.Position));
-
+    program.setUniform(UNIFORM_POSITION, RiftUtils.toVector3f(pose.Position));
     for (int i = 0; i < 4; ++i) {
       if (null != channels[i]) {
         glActiveTexture(GL_TEXTURE0 + i);
@@ -170,6 +156,7 @@ public class ShaderToyWindow extends RiftWindow {
       }
     }
 
+    MatrixStack mv = MatrixStack.MODELVIEW;
     mv.withPush(()->{
       Quaternion q = mv.getRotation();
       mv.identity().rotate(q);

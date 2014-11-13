@@ -14,7 +14,7 @@ public abstract class RenderWindow {
   private ContextAttribs contextAttributes = new ContextAttribs(3, 2)
       .withProfileCore(true);
   private PixelFormat pixelFormat = new PixelFormat();
-  protected int frameCount = 0;
+  private int frameCount = 0;
   private int lastFpsStartFrame = 0;
   private long lastFpsStartTime = -1;
   protected float fps = 0;
