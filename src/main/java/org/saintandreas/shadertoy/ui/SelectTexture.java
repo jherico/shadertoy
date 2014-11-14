@@ -1,7 +1,6 @@
 package org.saintandreas.shadertoy.ui;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.SWTException;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
@@ -14,9 +13,8 @@ import org.eclipse.swt.widgets.Dialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
-import org.saintandreas.resources.Resource;
-import org.saintandreas.resources.ResourceManager;
-import org.saintandreas.shadertoy.data.Data;
+import org.eclipse.wb.swt.SWTResourceManager;
+import org.saintandreas.shadertoy.data.ChannelInput;
 
 public class SelectTexture extends Dialog {
 
@@ -52,22 +50,16 @@ public class SelectTexture extends Dialog {
     return result;
   }
 
-  private void fillButtons(Composite composite, Resource[] resources, RowData rowData) {
-    for (Resource res : resources) {
+  private void fillButtons(Composite composite, ChannelInput[] inputs, RowData rowData) {
+    for (ChannelInput input : inputs) {
       Button button = new Button(composite, SWT.NONE);
-//      button.setText(res.getPath());
-//      button.setData(res);
-      
-      try {
-        button.setImage(new Image(shell.getDisplay(), ResourceManager.getAsInputStream(res)));
-      } catch (SWTException e) {
-        System.out.println(res.getPath());
-      }
+      Image image = SWTResourceManager.getImage(input.thumbnail);
+      button.setImage(image);
       button.setLayoutData(new RowData(64, 64));
       button.addSelectionListener(new SelectionAdapter() {
         @Override
         public void widgetSelected(SelectionEvent event) {
-          result = res;
+          result = input;
           shell.close();
         }
       });
@@ -95,7 +87,7 @@ public class SelectTexture extends Dialog {
       textures.setLayout(new RowLayout(SWT.HORIZONTAL));
       Label label = new Label(textures, SWT.NONE);
       label.setText("Textures");
-      fillButtons(textures, Data.TEXTURES, new RowData(64, 64));
+      fillButtons(textures, ChannelInput.TEXTURES, new RowData(64, 64));
     }
 
     {
@@ -103,7 +95,7 @@ public class SelectTexture extends Dialog {
       videos.setLayout(new RowLayout(SWT.HORIZONTAL));
       Label label = new Label(videos, SWT.NONE);
       label.setText("Videos");
-      fillButtons(videos, Data.VIDEOS, new RowData(128, 72));
+      fillButtons(videos, ChannelInput.VIDEOS, new RowData(128, 72));
     }
 
     {
@@ -111,7 +103,7 @@ public class SelectTexture extends Dialog {
       cubemaps.setLayout(new RowLayout(SWT.HORIZONTAL));
       Label label = new Label(cubemaps, SWT.NONE);
       label.setText("Cubemaps");
-      fillButtons(cubemaps, Data.CUBEMAPS, new RowData(64, 64));
+      fillButtons(cubemaps, ChannelInput.CUBEMAPS, new RowData(64, 64));
     }
 
     {

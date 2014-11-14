@@ -14,9 +14,8 @@ public abstract class RenderWindow {
   private ContextAttribs contextAttributes = new ContextAttribs(3, 2)
       .withProfileCore(true);
   private PixelFormat pixelFormat = new PixelFormat();
+  private RateCounter fpsCounter = new RateCounter();
   private int frameCount = 0;
-  private int lastFpsStartFrame = 0;
-  private long lastFpsStartTime = -1;
   protected float fps = 0;
 
   public void create(int width, int height, int x, int y) {
@@ -48,17 +47,10 @@ public abstract class RenderWindow {
     drawFrame();
     finishFrame();
 
-    long now = System.currentTimeMillis();
-    if (lastFpsStartTime < 0) {
-      lastFpsStartTime = now;
-    }
-    long elapsed = now - lastFpsStartTime;
-    if (elapsed >= 5000) {
-      float frames = frameCount - lastFpsStartFrame;
-      float elapsedSeconds = elapsed / 1000.0f;
-      fps = frames / elapsedSeconds;
-      lastFpsStartTime = now;
-      lastFpsStartFrame = frameCount;
+    fpsCounter.increment();
+    if (fpsCounter.duration() >= 5.0f) {
+      fps = fpsCounter.rate();
+      fpsCounter.reset();
       logFps();
     }
   }

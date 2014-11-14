@@ -6,6 +6,9 @@ import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL14.*;
 import static org.lwjgl.opengl.GL20.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.saintandreas.gl.IndexedGeometry;
 import org.saintandreas.gl.MatrixStack;
 import org.saintandreas.gl.OpenGL;
@@ -17,6 +20,7 @@ import org.saintandreas.math.Vector3f;
 import org.saintandreas.resources.Images;
 import org.saintandreas.resources.Resource;
 import org.saintandreas.resources.ResourceManager;
+import org.saintandreas.shadertoy.data.ChannelInput;
 import org.saintandreas.shadertoy.data.Shaders;
 
 import com.oculusvr.capi.Posef;
@@ -79,23 +83,38 @@ public class ShaderToyWindow extends RiftWindow {
     glViewport(0, 0, width, height);
   }
 
-  public static Texture getTexture(Resource resource) {
-    Texture texture = new Texture(GL_TEXTURE_2D);
-    texture.bind();
-    texture.parameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    texture.parameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    texture.parameter(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-    texture.parameter(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-    texture.parameter(GL_TEXTURE_WRAP_R, GL_MIRRORED_REPEAT);
-    texture.loadImageData(Images.load(resource), GL_TEXTURE_2D);
-    texture.unbind();
-    return texture;
+  private static Map<Resource, Texture> TEXTURE_MAP = new HashMap<>();
+  
+  public static synchronized Texture getTexture2d(Resource resource) {
+    if (!TEXTURE_MAP.containsKey(resource)) {
+      Texture texture = new Texture(GL_TEXTURE_2D);
+      texture.bind();
+      texture.parameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      texture.parameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      texture.parameter(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+      texture.parameter(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+      texture.parameter(GL_TEXTURE_WRAP_R, GL_MIRRORED_REPEAT);
+      texture.loadImageData(Images.load(resource), GL_TEXTURE_2D);
+      texture.unbind();
+      TEXTURE_MAP.put(resource, texture);
+    }
+    return TEXTURE_MAP.get(resource);
   }
   
-  public void setTextureSource(Resource res, int index) {
+  public void setTextureSource(ChannelInput result, int index) {
     assert(index >= 0);
     assert(index < channels.length);
-    channels[index] = getTexture(res);
+    switch (result.type) {
+    case TEXTURE:
+      channels[index] = getTexture2d(result.resource);
+      break;
+
+    case CUBEMAP:
+    case VIDEO:
+    case AUDIO:
+    default:
+      channels[index] = null;
+    }
     assert(0 == glGetError());
     updateUniforms();
   }

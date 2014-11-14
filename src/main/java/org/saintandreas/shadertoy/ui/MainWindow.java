@@ -8,6 +8,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -18,9 +19,10 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
-import org.saintandreas.resources.Resource;
+import org.eclipse.wb.swt.SWTResourceManager;
 import org.saintandreas.resources.ResourceManager;
 import org.saintandreas.shadertoy.ShaderToyWindow;
+import org.saintandreas.shadertoy.data.ChannelInput;
 import org.saintandreas.shadertoy.data.Shaders;
 
 import com.google.common.base.Charsets;
@@ -76,9 +78,11 @@ public class MainWindow {
     
     @Override
     public void widgetSelected(SelectionEvent e) {
-      Object result = new SelectTexture(shell, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL).open();
+      ChannelInput result = (ChannelInput) new SelectTexture(shell, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL).open();
       if (null != result) {
-        renderWindow.setTextureSource((Resource)result, channel);
+        Image image = SWTResourceManager.getImage(result.thumbnail);
+        ((Button)e.getSource()).setImage(image);
+        renderWindow.setTextureSource(result, channel);
       }
     }
   }
